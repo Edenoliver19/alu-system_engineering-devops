@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Installs and configures HAProxy on a new Ubuntu machine
+# to distribute traffic to web-01 and web-02 using roundrobin
+# Uses your hostname/student ID
+
+# Update package lists and install HAProxy
+sudo apt-get update
+sudo apt-get -y install haproxy
+
+# Enable HAProxy to be managed via init script
+sudo sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/haproxy
+
+# Configure HAProxy frontend and backend
+sudo tee /etc/haproxy/haproxy.cfg > /dev/null <<EOF
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+
+frontend eden_frontend
+    bind *:80
+    default_backend eden_backend
+
+backend eden_backend
+    balance roundrobin
+    server web-01 54.147.35.15:80 check
+    server web-02 44.204.91.237:80 check
+EOF
+
+# Restart HAProxy to apply changes
+sudo systemctl restart haproxy
