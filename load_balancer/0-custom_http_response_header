@@ -2,10 +2,9 @@
 # Configures a web server to add a custom HTTP response header
 # shellcheck disable=SC2154
 
-sudo apt-get update
+sudo apt-get -y update
 sudo apt-get -y install nginx
 
-# Use sed to add the header exactly once under server_name
-sudo sed -i "s/server_name _;/server_name _;\n\tadd_header X-Served-By $HOSTNAME;/" /etc/nginx/sites-available/default
+sudo sed -i '/listen 80 default_server;/a \ \tadd_header X-Served-By $HOSTNAME;' /etc/nginx/sites-available/default
 
 sudo service nginx restart
